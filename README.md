@@ -1,6 +1,6 @@
-# Single-shot Regression (SSR aka ssr_test)
+# Multi-shot Regression (MSR aka msr_test)
 
-This repository contains code for single shot regression that
+This repository contains code for multie shot regression that
 was shown to successfully work with the coinstac-simulator
 
 ## Getting Started
