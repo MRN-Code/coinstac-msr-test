@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "name": "single shot regression demo",
+    "id": "ssr_test",
+    "version": "v1.0.0",
+    "repository": "https:\/\/github.com\/MRN-Code\/ssr_test",
+    "description": "a test from single shot regresssion"
+  },
+  "computation": {
+    "type": "docker",
+    "dockerImage": "msr_test",
+    "command": [
+      "python",
+      "\/computation\/local.py"
+    ],
+    "remote": {
+      "type": "docker",
+      "dockerImage": "msr_test",
+      "command": [
+        "python",
+        "\/computation\/remote.py"
+      ]
+    },
+    "input": {
+      "covariates": {
+        "type": "array"
+      },
+      "dependents": {
+        "type": "array"
+      },
+      "lambda": {
+        "type": "number"
+      }
+    },
+    "output": {
+      "Beta": {
+        "type": "array"
+      }
+    }
+  }
+}
