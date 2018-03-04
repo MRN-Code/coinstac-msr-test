@@ -5,3 +5,35 @@ Spyder Editor
 This is a temporary script file.
 """
 
+# input to local_0
+python local.py '{"input": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}}'
+
+# output from local_0
+{"output": {"mean_y_local": 3.0, "count_local": 5, "beta_vec_size": 2, "computation_phase": "local_0"}, "cache": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}}
+
+# input to remote_0
+python remote.py '{"input": {"local0": {"mean_y_local": 3, "count_local": 5, "beta_vec_size": 2, "computation_phase": "local_0"}}}'
+
+# output from remote_0
+{"cache": {"beta1": 0.9, "beta2": 0.999, "eps": 1e-08, "tol": 1, "eta": 1, "count": 0, "wp": [0.0, 0.0], "mt": [0.0, 0.0], "vt": [0.0, 0.0], "iter_flag": 1}, "output": {"remote_beta": [0.0, 0.0], "computation_phase": "remote_0"}}
+
+# input to local_1
+python local.py '{"input": {"remote_beta": [0, 0], "computation_phase": "remote_0"}, "cache": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}}'
+
+# output from local_1
+{"cache": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}, "output": {"local_grad": [-3.0, -11.0], "computation_phase": "local_1"}}
+
+# input to remote_1
+python remote.py '{"input": {"local0": {"local_grad": [-3, -11], "computation_phase": "local_1"}}, "cache": {"beta1": 0.9, "beta2": 0.999, "eps": 1e-08, "tol": 1, "eta": 1, "count": 0, "wp": [0, 0], "mt": [0, 0], "vt": [0, 0], "iter_flag": 1}}'
+
+# output from remote_1
+{"cache": {"beta1": 0.9, "beta2": 0.999, "eps": 1e-08, "tol": 1, "eta": 1, "beta": [0.9999999966666667, 0.9999999990909089], "mt": [-0.29999999999999993, -1.0999999999999996], "vt": [0.009000000000000008, 0.12100000000000011], "iter_flag": 1, "count": 1}, "output": {"remote_beta": [0.9999999966666667, 0.9999999990909089], "computation_phase": "remote_1a"}}
+
+# input to local_1
+python local.py '{"input": {"remote_beta": [0.9999999966666667, 0.9999999990909089], "computation_phase": "remote_1a"}, "cache": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}}'
+
+# output from local_1
+{"cache": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}, "output": {"local_grad": [0.9999999939393933, 2.999999979999998], "computation_phase": "local_1"}}
+
+# input to remote_1
+python remote.py '{"input": {"local0": {"local_grad": [0.9999999939393933, 2.999999979999998], "computation_phase": "local_1"}}, "cache": {"beta1": 0.9, "beta2": 0.999, "eps": 1e-08, "tol": 1, "eta": 1, "beta": [0.9999999966666667, 0.9999999990909089], "mt": [-0.29999999999999993, -1.0999999999999996], "vt": [0.009000000000000008, 0.12100000000000011], "iter_flag": 1, "count": 1}}'
