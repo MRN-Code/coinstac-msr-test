@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Mar  3 16:56:08 2018
+
+@author: Harshvardhan
+"""
+
+# Input to local_0
+python local.py '{"input": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}}'
+
+# Output from local_0
+{"output": {"mean_y_local": 27.919999999999998, "count_local": 5, "beta_vec_size": 2, "computation_phase": "local_0"}, "cache": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}}
+
+# Input to remote_0
+python remote.py '{"input": {"local0": {"mean_y_local": 27.919999999999998, "count_local": 5, "beta_vec_size": 2, "computation_phase": "local_0"}}}'
+
+# Output from remote_0
+{"cache": {"beta1": 0.9, "beta2": 0.999, "eps": 1e-08, "tol": 1, "eta": 1, "count": 0, "wp": [0.0, 0.0], "mt": [0.0, 0.0], "vt": [0.0, 0.0], "iter_flag": true}, "output": {"remote_beta": [0.0, 0.0], "computation_phase": "remote_0"}}
+
+# Input to local_1
+python local.py '{"input": {"remote_beta": [0, 0], "computation_phase": "remote_0"}, "cache": {"covariates": [20.1, 7.1, 16.1, 14.9, 16.7], "dependents": [31.5, 18.9, 35, 31.6, 22.6], "lambda": 0}}'
+
+# Output from local_1
+{"cache": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}, "output": {"local_grad": [-27.92, -435.8200000000001], "computation_phase": "local_1"}}
+
+# Input to remote_1
+python remote.py '{"input": {"local0": {"local_grad": [-27.92, -435.8200000000001], "computation_phase": "local_1"}}, "cache": {"beta1": 0.9, "beta2": 0.999, "eps": 1e-08, "tol": 1, "eta": 1, "count": 0, "wp": [0, 0], "mt": [0, 0], "vt": [0, 0], "iter_flag": 1}}'
+
+# Output from remote_1
+{"cache": {"beta1": 0.9, "beta2": 0.999, "eps": 1e-08, "tol": 1, "eta": 1, "beta": [0.9999999996418336, 0.9999999999770547], "mt": [-2.7919999999999994, -43.582], "vt": [0.7795264000000007, 189.93907240000027], "iter_flag": 1, "count": 1}, "output": {"iter_flag": 1, "remote_beta": [0.9999999996418336, 0.9999999999770547], "computation_phase": "remote_1a"}}
+
+# Input to local_1
+python local.py '{"input": {"remote_beta": [0.9999999996418336, 0.9999999999770547], "computation_phase": "remote_1a"}, "cache": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}}'
+
+# Output from local_1
+{"cache": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}, "output": {"local_grad": [-11.940000000701886, -177.93400001093892], "computation_phase": "local_1"}}
+
+# Input to remote_1 (from here speculative)
+python remote.py '{"input": {"local0": {"local_grad": [-11.940000000701886, -177.93400001093892], "computation_phase": "local_1"}}, "cache": {"beta1": 0.9, "beta2": 0.999, "eps": 1e-08, "tol": 1, "eta": 1, "count": 0, "wp": [0.9999999996418336, 0.9999999999770547], "mt": [-2.7919999999999994, -43.582], "vt": [0.7795264000000007, 189.93907240000027], "iter_flag": 1}}'
+
+# Output from remote_1
+{"cache": {"beta1": 0.9, "beta2": 0.999, "eps": 1e-08, "tol": 1, "eta": 1, "beta": [2.2212263037904956, 2.211734914309628], "mt": [-3.7068000000701877, -57.01720000109389], "vt": [0.9213104736167619, 221.40964168749312], "iter_flag": 1, "count": 1}, "output": {"remote_beta": [2.2212263037904956, 2.211734914309628], "computation_phase": "remote_1a"}}
+
+# Input to local_1
+python local.py '{"input": {"remote_beta": [2.2212263037904956, 2.211734914309628], "computation_phase": "remote_1a"}, "cache": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}}'
+
+# Output from local_1
+{"cache": {"covariates": [1, 2, 3, 4, 5], "dependents": [1, 2, 3, 4, 5], "lambda": 0}, "output": {"local_grad": [7.433015320148721, 134.6976511260761], "computation_phase": "local_1"}}
+
+# Input to remote_1
+python remote.py '{"input": {"local0": {"local_grad": [7.433015320148721, 134.6976511260761], "computation_phase": "local_1"}}, "cache": {"beta1": 0.9, "beta2": 0.999, "eps": 1e-08, "tol": 1, "eta": 1, "count": 0, "wp": [2.2212263037904956, 2.211734914309628], "mt": [-3.7068000000701877, -57.01720000109389], "vt": [0.9213104736167619, 221.40964168749312], "iter_flag": 1}}'
+
+# Output from remote_1

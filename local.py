@@ -40,8 +40,7 @@ def local_0(args):
     y = input_list["dependents"]
     lamb = input_list["lambda"]
 
-    # Hard-coded this for the time being
-    beta_vec_size = 2
+    beta_vec_size = np.array(X).shape[1] + 1
 
     computation_output = {
         "output": {
@@ -150,7 +149,8 @@ def local_3(args):
     mean_y_global = input_list["mean_y_global"]
 
     SSE_local = reg.sum_squared_error(biased_X, y, avg_beta_vector)
-    SST_local = np.sum(np.square(np.subtract(y, mean_y_global)))
+    SST_local = np.sum(
+        np.square(np.subtract(y, mean_y_global)), dtype=np.float64)
     varX_matrix_local = np.dot(biased_X.T, biased_X)
 
     computation_output = {
@@ -159,8 +159,7 @@ def local_3(args):
             "SST_local": SST_local,
             "varX_matrix_local": varX_matrix_local.tolist(),
             "computation_phase": "local_3"
-        },
-        "cache": {}
+        }
     }
 
     return json.dumps(computation_output)

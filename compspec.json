@@ -1,10 +1,10 @@
 {
   "meta": {
-    "name": "single shot regression demo",
-    "id": "ssr_test",
+    "name": "multi shot regression demo",
+    "id": "msr_test",
     "version": "v1.0.0",
-    "repository": "https:\/\/github.com\/MRN-Code\/ssr_test",
-    "description": "a test from single shot regresssion"
+    "repository": "https:\/\/github.com\/MRN-Code\/msr_test",
+    "description": "a test from multi shot regresssion"
   },
   "computation": {
     "type": "docker",

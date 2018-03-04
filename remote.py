@@ -29,15 +29,15 @@ def remote_0(args):
     beta1 = 0.9
     beta2 = 0.999
     eps = 1e-8
-    tol = 1e-1
-    eta = 1
+    tol = 0.01
+    eta = 0.05
     count = 0
 
     wp = np.zeros(beta_vec_size)
     mt = np.zeros(beta_vec_size)
     vt = np.zeros(beta_vec_size)
 
-    iter_flag = True
+    iter_flag = 1
 
     computation_output = {
         "cache": {
@@ -79,11 +79,10 @@ def remote_1(args):
     if not iter_flag:
         computation_output = {
             "cache": {
-                "dof_global": args["cache"]["dof_global"],
-                "avg_beta_vector": wp.tolist()
+                "avg_beta_vector": wp
             },
             "output": {
-                "avg_beta_vector": wp.tolist(),
+                "avg_beta_vector": wp,
                 "computation_phase": "remote_1b"
             }
         }
@@ -94,13 +93,14 @@ def remote_1(args):
                 np.array(args["input"][site]["local_grad"])
                 for site in input_list
             ]
+            grad_remote = grad_remote[0]
         else:
             grad_remote = sum([
                 np.array(args["input"][site]["local_grad"])
                 for site in input_list
             ])
 
-        mt = beta1 * np.array(mt) + (1 - beta1) * grad_remote[0]
+        mt = beta1 * np.array(mt) + (1 - beta1) * grad_remote
         vt = beta2 * np.array(vt) + (1 - beta2) * (grad_remote[0]**2)
 
         m = mt / (1 - beta1**count)
@@ -109,7 +109,7 @@ def remote_1(args):
         wc = wp - eta * m / (np.sqrt(v) + eps)
 
         if np.linalg.norm(wc - wp) <= tol:
-            iter_flag = False
+            iter_flag = 0
 
         wp = wc
 
@@ -120,14 +120,13 @@ def remote_1(args):
                 "eps": eps,
                 "tol": tol,
                 "eta": eta,
-                "beta": wp.tolist(),
+                "count": count,
+                "wp": wp.tolist(),
                 "mt": mt.tolist(),
                 "vt": vt.tolist(),
-                "iter_flag": iter_flag,
-                "count": count
+                "iter_flag": iter_flag
             },
             "output": {
-                "iter_flag": iter_flag,
                 "remote_beta": wc.tolist(),
                 "computation_phase": "remote_1a"
             }
@@ -165,8 +164,7 @@ def remote_2(args):
     """
     input_list = args["input"]
 
-    avg_beta_vector = np.mean(
-        [input_list[site]["beta_vector_local"] for site in input_list], axis=0)
+    avg_beta_vector = args["cache"]["avg_beta_vector"]
 
     mean_y_local = [input_list[site]["mean_y_local"] for site in input_list]
     count_y_local = [input_list[site]["count_local"] for site in input_list]
@@ -176,12 +174,12 @@ def remote_2(args):
 
     computation_output = {
         "output": {
-            "avg_beta_vector": avg_beta_vector.tolist(),
+            "avg_beta_vector": avg_beta_vector,
             "mean_y_global": mean_y_global,
             "computation_phase": "remote_2"
         },
         "cache": {
-            "avg_beta_vector": avg_beta_vector.tolist(),
+            "avg_beta_vector": avg_beta_vector,
             "mean_y_global": mean_y_global,
             "dof_global": dof_global
         },
