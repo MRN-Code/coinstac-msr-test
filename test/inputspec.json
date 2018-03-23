@@ -1,1 +1,44 @@
-{"covariates":{"value":[[1],[2],[3],[4],[5]]},"dependents":{"value":[1,2,3,4,5]}, "lambda":{"value":0}}
+{
+  "covariates": {
+    "value": [
+      [
+        [
+          ["freesurferfile", "isControl", "age"],
+          ["subject0_aseg_stats.txt", "False", "22.0"],
+          ["subject1_aseg_stats.txt", "True", "47.0"],
+          ["subject2_aseg_stats.txt", "False", "56.0"],
+          ["subject3_aseg_stats.txt", "True", "73.0"]
+        ]
+      ],
+      [
+        "isControl",
+        "age"
+      ],
+      [
+        "boolean",
+        "number"
+      ]
+    ]
+  },
+  "data": {
+    "value": [
+      [
+        [
+          "-Users-torrankahleck-coinstac-packages-coinstac-ui-test-e2e-test_files-site1-subject0_aseg_stats.txt",
+          "-Users-torrankahleck-coinstac-packages-coinstac-ui-test-e2e-test_files-site1-subject1_aseg_stats.txt",
+          "-Users-torrankahleck-coinstac-packages-coinstac-ui-test-e2e-test_files-site1-subject2_aseg_stats.txt",
+          "-Users-torrankahleck-coinstac-packages-coinstac-ui-test-e2e-test_files-site1-subject3_aseg_stats.txt"
+        ]
+      ],
+      [
+        ["3rd-Ventricle", "4th-Ventricle", "5th-Ventricle"]
+      ],
+      [
+        "FreeSurfer"
+      ]
+    ]
+  },
+  "lambda": {
+    "value": 0
+  }
+}

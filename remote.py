@@ -22,8 +22,11 @@ def listRecursive(d, key):
 
 def remote_0(args):
     """Need this function for performing multi-shot regression"""
-
     beta_vec_size = args["input"]["local0"]["beta_vec_size"]
+    input_list = args["input"]
+    all_local_stats_dicts = [
+        input_list[site]["local_stats_dict"] for site in input_list
+    ]
 
     # Initial setup
     beta1 = 0.9
@@ -50,7 +53,8 @@ def remote_0(args):
             "wp": wp.tolist(),
             "mt": mt.tolist(),
             "vt": vt.tolist(),
-            "iter_flag": iter_flag
+            "iter_flag": iter_flag,
+            "all_local_stats_dicts": all_local_stats_dicts
         },
         "output": {
             "remote_beta": wp.tolist(),
@@ -124,7 +128,8 @@ def remote_1(args):
                 "wp": wp.tolist(),
                 "mt": mt.tolist(),
                 "vt": vt.tolist(),
-                "iter_flag": iter_flag
+                "iter_flag": iter_flag,
+                "local_stats_dict": args["cache"]["all_local_stats_dicts"]
             },
             "output": {
                 "remote_beta": wc.tolist(),
@@ -181,7 +186,8 @@ def remote_2(args):
         "cache": {
             "avg_beta_vector": avg_beta_vector,
             "mean_y_global": mean_y_global,
-            "dof_global": dof_global
+            "dof_global": dof_global,
+            "all_local_stats_dicts": args["cache"]["all_local_stats_dicts"]
         },
     }
 
@@ -229,6 +235,7 @@ def remote_3(args):
 
     """
     input_list = args["input"]
+    all_local_stats_dicts = args["cache"]["all_local_stats_dicts"]
 
     cache_list = args["cache"]
     avg_beta_vector = cache_list["avg_beta_vector"]

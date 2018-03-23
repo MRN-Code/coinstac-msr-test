@@ -3,21 +3,14 @@
 """
 This script includes the local computations for single-shot ridge
 regression with decentralized statistic calculation
-
-Example:
-    python local.py '{"input":
-                        {"covariates": [[2,3],[3,4],[7,8],[7,5],[9,8]],
-                         "dependents": [6,7,8,5,6],
-                         "lambda": 0
-                         },
-                     "cache": {}
-                     }'
 """
 import json
 import numpy as np
 import sys
 import regression as reg
 import warnings
+from parsers import fsl_parser
+import pandas as pd
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -36,22 +29,69 @@ def listRecursive(d, key):
 def local_0(args):
 
     input_list = args["input"]
-    X = input_list["covariates"]
-    y = input_list["dependents"]
     lamb = input_list["lambda"]
 
-    beta_vec_size = np.array(X).shape[1] + 1
+    (X, y, y_labels) = fsl_parser(args)
+    beta_vec_size = X.shape[1] + 1
+#    # considering only one regression given the challenges in
+#    # multi-shot regressin with multiple regressions
+#    y = pd.DataFrame(y.loc[:, y.columns[0]])
+#    y_labels = [y_labels[0]]
+#
+#    biased_X = sm.add_constant(X)
+#    biased_X = biased_X.values
+#
+#    beta_vector, meanY_vector, lenY_vector = [], [], []
+#
+#    local_params = []
+#    local_sse = []
+#    local_pvalues = []
+#    local_tvalues = []
+#    local_rsquared = []
+#
+#    for column in y.columns:
+#        curr_y = list(y[column])
+#        beta = reg.one_shot_regression(biased_X, curr_y, lamb)
+#        beta_vector.append(beta.tolist())
+#        meanY_vector.append(np.mean(curr_y))
+#        lenY_vector.append(len(y))
+#
+#        # Printing local stats as well
+#        model = sm.OLS(curr_y, biased_X.astype(float)).fit()
+#        local_params.append(model.params)
+#        local_sse.append(model.ssr)
+#        local_pvalues.append(model.pvalues)
+#        local_tvalues.append(model.tvalues)
+#        local_rsquared.append(model.rsquared_adj)
+#        break
+#
+#    keys = ["beta", "sse", "pval", "tval", "rsquared"]
+#    dict_list = []
+#    for index, _ in enumerate(y_labels):
+#        values = [
+#            local_params[index].tolist(), local_sse[index],
+#            local_pvalues[index].tolist(), local_tvalues[index].tolist(),
+#            local_rsquared[index]
+#        ]
+#        local_stats_dict = {key: value for key, value in zip(keys, values)}
+#        dict_list.append(local_stats_dict)
+
+    X = X.values
+    y = y.values
+
+    dict_list = 0
 
     computation_output = {
         "output": {
             "mean_y_local": np.mean(y),
             "count_local": len(y),
             "beta_vec_size": beta_vec_size,
+            "local_stats_dict": dict_list,
             "computation_phase": "local_0"
         },
         "cache": {
-            "covariates": X,
-            "dependents": y,
+            "covariates": X.tolist(),
+            "dependents": y.tolist(),
             "lambda": lamb
         }
     }
