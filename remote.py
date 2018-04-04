@@ -23,7 +23,9 @@ def listRecursive(d, key):
 def remote_0(args):
     """Need this function for performing multi-shot regression"""
 
-    beta_vec_size = args["input"]["local0"]["beta_vec_size"]
+    input_list = args["input"]
+    first_user_id = list(input_list.keys())[0]
+    beta_vec_size = args["input"][first_user_id]["beta_vec_size"]
 
     # Initial setup
     beta1 = 0.9
