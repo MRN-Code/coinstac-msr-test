@@ -4,10 +4,10 @@
       [
         [
           ["freesurferfile", "isControl", "age"],
-          ["subject0_aseg_stats.txt", "False", "22.0"],
-          ["subject1_aseg_stats.txt", "True", "47.0"],
-          ["subject2_aseg_stats.txt", "False", "56.0"],
-          ["subject3_aseg_stats.txt", "True", "73.0"]
+          ["subject0_aseg_stats.txt", false, 22.0],
+          ["subject1_aseg_stats.txt", true, 47.0],
+          ["subject2_aseg_stats.txt", false, 56.0],
+          ["subject3_aseg_stats.txt", true, 73.0]
         ]
       ],
       [
@@ -23,15 +23,13 @@
   "data": {
     "value": [
       [
-        [
           "subject0_aseg_stats.txt",
           "subject1_aseg_stats.txt",
           "subject2_aseg_stats.txt",
           "subject3_aseg_stats.txt"
-        ]
       ],
       [
-        ["3rd-Ventricle", "4th-Ventricle", "5th-Ventricle"]
+        "3rd-Ventricle", "4th-Ventricle", "5th-Ventricle"
       ],
       [
         "FreeSurfer"

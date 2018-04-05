@@ -27,75 +27,76 @@ def listRecursive(d, key):
 
 
 def local_0(args):
+    """Read data from the local sites, perform local regressions and send
+    local statistics to the remote site"""
 
     input_list = args["input"]
     lamb = input_list["lambda"]
 
     (X, y, y_labels) = fsl_parser(args)
     beta_vec_size = X.shape[1] + 1
-#    # considering only one regression given the challenges in
-#    # multi-shot regressin with multiple regressions
-#    y = pd.DataFrame(y.loc[:, y.columns[0]])
-#    y_labels = [y_labels[0]]
-#
-#    biased_X = sm.add_constant(X)
-#    biased_X = biased_X.values
-#
-#    beta_vector, meanY_vector, lenY_vector = [], [], []
-#
-#    local_params = []
-#    local_sse = []
-#    local_pvalues = []
-#    local_tvalues = []
-#    local_rsquared = []
-#
-#    for column in y.columns:
-#        curr_y = list(y[column])
-#        beta = reg.one_shot_regression(biased_X, curr_y, lamb)
-#        beta_vector.append(beta.tolist())
-#        meanY_vector.append(np.mean(curr_y))
-#        lenY_vector.append(len(y))
-#
-#        # Printing local stats as well
-#        model = sm.OLS(curr_y, biased_X.astype(float)).fit()
-#        local_params.append(model.params)
-#        local_sse.append(model.ssr)
-#        local_pvalues.append(model.pvalues)
-#        local_tvalues.append(model.tvalues)
-#        local_rsquared.append(model.rsquared_adj)
-#        break
-#
-#    keys = ["beta", "sse", "pval", "tval", "rsquared"]
-#    dict_list = []
-#    for index, _ in enumerate(y_labels):
-#        values = [
-#            local_params[index].tolist(), local_sse[index],
-#            local_pvalues[index].tolist(), local_tvalues[index].tolist(),
-#            local_rsquared[index]
-#        ]
-#        local_stats_dict = {key: value for key, value in zip(keys, values)}
-#        dict_list.append(local_stats_dict)
+
+    # considering only one regression given the challenges in
+    # multi-shot regressin with multiple regressions
+    y = pd.DataFrame(y.loc[:, y.columns[0]])
+    y_labels = [y_labels[0]]
+
+    biased_X = sm.add_constant(X)
+    biased_X = biased_X.values
+
+    beta_vector, meanY_vector, lenY_vector = [], [], []
+
+    local_params = []
+    local_sse = []
+    local_pvalues = []
+    local_tvalues = []
+    local_rsquared = []
+
+    for column in y.columns:
+        curr_y = list(y[column])
+        beta = reg.one_shot_regression(biased_X, curr_y, lamb)
+        beta_vector.append(beta.tolist())
+        meanY_vector.append(np.mean(curr_y))
+        lenY_vector.append(len(y))
+
+        # Printing local stats as well
+        model = sm.OLS(curr_y, biased_X.astype(float)).fit()
+        local_params.append(model.params)
+        local_sse.append(model.ssr)
+        local_pvalues.append(model.pvalues)
+        local_tvalues.append(model.tvalues)
+        local_rsquared.append(model.rsquared_adj)
+
+    keys = ["beta", "sse", "pval", "tval", "rsquared"]
+    local_stats_list = []
+    for index, _ in enumerate(y_labels):
+        values = [
+            local_params[index].tolist(), local_sse[index],
+            local_pvalues[index].tolist(), local_tvalues[index].tolist(),
+            local_rsquared[index]
+        ]
+        local_stats_dict = {key: value for key, value in zip(keys, values)}
+        local_stats_list.append(local_stats_dict)
 
     X = X.values
     y = y.values
 
-    dict_list = 0
+    y = [item for sublist in y for item in sublist]
 
     computation_output = {
         "output": {
             "mean_y_local": np.mean(y),
             "count_local": len(y),
             "beta_vec_size": beta_vec_size,
-            "local_stats_dict": dict_list,
+            "local_stats_dict": local_stats_list,
             "computation_phase": "local_0"
         },
         "cache": {
             "covariates": X.tolist(),
-            "dependents": y.tolist(),
+            "dependents": list(y),
             "lambda": lamb
         }
     }
-
     return json.dumps(computation_output)
 
 

@@ -40,7 +40,6 @@ def fsl_parser(args):
 
     X_data = X_info[0][0]
     X_labels = X_info[1]
-    X_types = X_info[2]
 
     X_df = pd.DataFrame.from_records(X_data)
     X_df.columns = X_df.iloc[0]
@@ -49,15 +48,10 @@ def fsl_parser(args):
     X_files = list(X_df['freesurferfile'])
 
     X = X_df[X_labels]
-    xs = X_labels
-    ys = X_types
-    result = [x for x, y in zip(xs, ys) if y == 'boolean']
-    pd.options.mode.chained_assignment = None  # default='warn'
-    X[result] = (X[result] == 'True').astype(int)
     X = X.apply(pd.to_numeric, errors='ignore')
 
-    y_files = y_info[0][0]
-    y_labels = y_info[1][0]
+    y_files = y_info[0]
+    y_labels = y_info[1]
 
     y_list = parse_for_y_array(args, X_files, y_files, y_labels)
     y = pd.DataFrame.from_records(y_list, columns=y_labels)
