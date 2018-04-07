@@ -17,15 +17,6 @@ with warnings.catch_warnings():
     import statsmodels.api as sm
 
 
-def listRecursive(d, key):
-    for k, v in d.items():
-        if isinstance(v, dict):
-            for found in listRecursive(v, key):
-                yield found
-        if k == key:
-            yield v
-
-
 def local_0(args):
     """Read data from the local sites, perform local regressions and send
     local statistics to the remote site"""
@@ -209,7 +200,7 @@ def local_3(args):
 if __name__ == '__main__':
 
     parsed_args = json.loads(sys.argv[1])
-    phase_key = list(listRecursive(parsed_args, 'computation_phase'))
+    phase_key = list(reg.listRecursive(parsed_args, 'computation_phase'))
 
     if not phase_key:
         computation_output = local_0(parsed_args)

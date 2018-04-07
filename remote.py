@@ -11,15 +11,6 @@ import numpy as np
 import regression as reg
 
 
-def listRecursive(d, key):
-    for k, v in d.items():
-        if isinstance(v, dict):
-            for found in listRecursive(v, key):
-                yield found
-        if k == key:
-            yield v
-
-
 def remote_0(args):
     """Need this function for performing multi-shot regression"""
     input_list = args["input"]
@@ -273,7 +264,7 @@ def remote_3(args):
 if __name__ == '__main__':
 
     parsed_args = json.loads(sys.argv[1])
-    phase_key = list(listRecursive(parsed_args, "computation_phase"))
+    phase_key = list(reg.listRecursive(parsed_args, "computation_phase"))
 
     if "local_0" in phase_key:
         computation_output = remote_0(parsed_args)
