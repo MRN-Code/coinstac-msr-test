@@ -22,12 +22,13 @@ def remote_0(args):
     ]
 
     number_of_regressions = input_list[first_user_id]["number_of_regressions"]
+
     # Initial setup
     beta1 = 0.9
     beta2 = 0.999
     eps = 1e-8
-    tol = 0.1
-    eta = 10000  # 0.05
+    tol = 0.01
+    eta = 0.05  # 0.05
     count = 0
 
     wp = np.zeros((number_of_regressions, beta_vec_size), dtype=float)
@@ -51,7 +52,8 @@ def remote_0(args):
             "vt": vt.tolist(),
             "iter_flag": iter_flag,
             "all_local_stats_dicts": all_local_stats_dicts,
-            "number_of_regressions": number_of_regressions
+            "number_of_regressions": number_of_regressions,
+            "y_labels": input_list[first_user_id]["y_labels"]
         },
         "output": {
             "remote_beta": wp.tolist(),
@@ -83,7 +85,8 @@ def remote_1(args):
     if not iter_flag:
         computation_output = {
             "cache": {
-                "avg_beta_vector": wp.tolist()
+                "avg_beta_vector": wp.tolist(),
+                "y_labels": args["cache"]["y_labels"]
             },
             "output": {
                 "avg_beta_vector": wp.tolist(),
@@ -138,7 +141,8 @@ def remote_1(args):
                 "mt": mt.tolist(),
                 "vt": vt.tolist(),
                 "iter_flag": iter_flag,
-                "local_stats_dict": args["cache"]["all_local_stats_dicts"]
+                "local_stats_dict": args["cache"]["all_local_stats_dicts"],
+                "y_labels": args["cache"]["y_labels"]
             },
             "output": {
                 "remote_beta": wc.tolist(),
@@ -179,25 +183,29 @@ def remote_2(args):
     """
     input_list = args["input"]
 
-    avg_beta_vector = args["cache"]["avg_beta_vector"]
+    avg_beta_vector = np.array(args["cache"]["avg_beta_vector"])
 
     mean_y_local = [input_list[site]["mean_y_local"] for site in input_list]
-    count_y_local = [input_list[site]["count_local"] for site in input_list]
-    mean_y_global = np.average(mean_y_local, weights=count_y_local)
+    count_y_local = [
+        np.array(input_list[site]["count_local"]) for site in input_list
+    ]
+    mean_y_global = np.array(mean_y_local) * np.array(count_y_local)
+    mean_y_global = np.average(mean_y_global, axis=0)
 
-    dof_global = sum(count_y_local) - len(avg_beta_vector)
+    dof_global = sum(count_y_local) - avg_beta_vector.shape[1]
 
     computation_output = {
         "output": {
-            "avg_beta_vector": avg_beta_vector,
-            "mean_y_global": mean_y_global,
+            "avg_beta_vector": avg_beta_vector.tolist(),
+            "mean_y_global": mean_y_global.tolist(),
             "computation_phase": "remote_2"
         },
         "cache": {
-            "avg_beta_vector": avg_beta_vector,
-            "mean_y_global": mean_y_global,
-            "dof_global": dof_global,
-            "all_local_stats_dicts": args["cache"]["all_local_stats_dicts"]
+            "avg_beta_vector": avg_beta_vector.tolist(),
+            "mean_y_global": mean_y_global.tolist(),
+            "dof_global": dof_global.tolist(),
+            "all_local_stats_dicts": args["cache"]["all_local_stats_dicts"],
+            "y_labels": args["cache"]["y_labels"]
         },
     }
 
@@ -245,38 +253,75 @@ def remote_3(args):
 
     """
     input_list = args["input"]
-    all_local_stats_dicts = args["cache"]["all_local_stats_dicts"]
+    y_labels = args["cache"]["y_labels"]
+    all_local_stats_dicts = args["cache"]["local_stats_dict"]
 
     cache_list = args["cache"]
     avg_beta_vector = cache_list["avg_beta_vector"]
     dof_global = cache_list["dof_global"]
 
-    SSE_global = np.sum([input_list[site]["SSE_local"] for site in input_list])
-    SST_global = np.sum([input_list[site]["SST_local"] for site in input_list])
+    SSE_global = sum(
+        [np.array(input_list[site]["SSE_local"]) for site in input_list])
+    SST_global = sum(
+        [np.array(input_list[site]["SST_local"]) for site in input_list])
     varX_matrix_global = sum([
         np.array(input_list[site]["varX_matrix_local"]) for site in input_list
     ])
 
     r_squared_global = 1 - (SSE_global / SST_global)
-    MSE = SSE_global / dof_global
-    var_covar_beta_global = MSE * sp.linalg.inv(varX_matrix_global)
-    se_beta_global = np.sqrt(var_covar_beta_global.diagonal())
-    ts_global = avg_beta_vector / se_beta_global
-    ps_global = reg.t_to_p(ts_global, dof_global)
+    MSE = SSE_global / np.array(dof_global)
 
-#    raise Exception(cache_list["avg_beta_vector"], r_squared_global, ts_global, ps_global, cache_list["dof_global"])
+    ts_global = []
+    ps_global = []
+
+    for i in range(len(MSE)):
+        var_covar_beta_global = MSE[i] * sp.linalg.inv(varX_matrix_global)
+        se_beta_global = np.sqrt(var_covar_beta_global.diagonal())
+        ts = avg_beta_vector[i] / se_beta_global
+        ps = reg.t_to_p(ts, dof_global[i])
+        ts_global.append(ts)
+        ps_global.append(ps)
+
+    # Block of code to print local stats as well
+    sites = ['Site_' + str(i) for i in range(len(all_local_stats_dicts))]
+
+    all_local_stats_dicts = list(map(list, zip(*all_local_stats_dicts)))
+
+    a_dict = [{
+        key: value
+        for key, value in zip(sites, all_local_stats_dicts[i])
+    } for i in range(len(all_local_stats_dicts))]
+
+    # Block of code to print just global stats
+    keys1 = [
+        "avg_beta_vector", "r2_global", "ts_global", "ps_global", "dof_global"
+    ]
+    global_dict_list = []
+    for index, _ in enumerate(y_labels):
+        values = [
+            avg_beta_vector[index], r_squared_global[index],
+            ts_global[index].tolist(), ps_global[index], dof_global[index]
+        ]
+        my_dict = {key: value for key, value in zip(keys1, values)}
+        global_dict_list.append(my_dict)
+
+    # Print Everything
+    dict_list = []
+    keys2 = ["ROI", "global_stats", "local_stats"]
+    for index, label in enumerate(y_labels):
+        values = [label, global_dict_list[index], a_dict[index]]
+        my_dict = {key: value for key, value in zip(keys2, values)}
+        dict_list.append(my_dict)
+
     computation_output = {
         "output": {
-            "avg_beta_vector": cache_list["avg_beta_vector"],
-            "r_2_global": r_squared_global,
-            "ts_global": ts_global.tolist(),
-            "ps_global": ps_global,
-            "dof_global": cache_list["dof_global"]
+            "regressions": dict_list
         },
         "success": True
     }
 
     return json.dumps(computation_output)
+
 
 
 if __name__ == '__main__':

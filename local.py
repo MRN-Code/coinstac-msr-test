@@ -25,6 +25,8 @@ def local_0(args):
     lamb = input_list["lambda"]
 
     (X, y, y_labels) = fsl_parser(args)
+    X = pd.DataFrame([1, 2, 3, 4, 5], columns=['3rd-Ventricle'])
+    y = pd.DataFrame([1, 2, 3, 4, 5], columns=[0])
 
     beta_vec_size = X.shape[1] + 1
 
@@ -43,7 +45,6 @@ def local_0(args):
     local_tvalues = []
     local_rsquared = []
 
-    raise Exception(y, y.shape)
     for column in y.columns:
         curr_y = list(y[column])
         beta = reg.one_shot_regression(biased_X, curr_y, lamb)
@@ -73,15 +74,14 @@ def local_0(args):
     X = X.values
     y = y.transpose().values
 
-    #    y = [item for sublist in y for item in sublist]
-
     computation_output = {
         "output": {
+            "beta_vec_size": beta_vec_size,
+            "number_of_regressions": len(y_labels),
             "mean_y_local": meanY_vector,
             "count_local": lenY_vector,
-            "beta_vec_size": beta_vec_size,
             "local_stats_dict": local_stats_list,
-            "number_of_regressions": len(y_labels),
+            "y_labels": y_labels,
             "computation_phase": "local_0"
         },
         "cache": {
@@ -196,11 +196,17 @@ def local_3(args):
     biased_X = sm.add_constant(X)
 
     avg_beta_vector = input_list["avg_beta_vector"]
-    mean_y_global = input_list["mean_y_global"]
+    mean_y_global = cache_list["mean_y_global"]
 
-    SSE_local = reg.sum_squared_error(biased_X, y, avg_beta_vector)
-    SST_local = np.sum(
-        np.square(np.subtract(y, mean_y_global)), dtype=np.float64)
+    y = pd.DataFrame(y)
+    SSE_local, SST_local = [], []
+    for index, column in enumerate(y.columns):
+        curr_y = y[column].values
+        SSE_local.append(
+            reg.sum_squared_error(biased_X, curr_y, avg_beta_vector))
+        SST_local.append(
+            np.sum(np.square(np.subtract(curr_y, mean_y_global[index]))))
+
     varX_matrix_local = np.dot(biased_X.T, biased_X)
 
     computation_output = {
@@ -209,7 +215,8 @@ def local_3(args):
             "SST_local": SST_local,
             "varX_matrix_local": varX_matrix_local.tolist(),
             "computation_phase": "local_3"
-        }
+        },
+        "cache": {}
     }
 
     return json.dumps(computation_output)
