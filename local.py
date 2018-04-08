@@ -28,9 +28,9 @@ def local_0(args):
     beta_vec_size = X.shape[1] + 1
 
     # considering only one regression given the challenges in
-    # multi-shot regressin with multiple regressions
-    y = pd.DataFrame(y.loc[:, y.columns[0]])
-    y_labels = [y_labels[0]]
+    # multi-shot regression with multiple regressions
+    #    y = pd.DataFrame(y.loc[:, y.columns[0]])
+    #    y_labels = [y_labels[0]]
 
     biased_X = sm.add_constant(X)
     biased_X = biased_X.values
@@ -70,21 +70,24 @@ def local_0(args):
         local_stats_list.append(local_stats_dict)
 
     X = X.values
-    y = y.values
+    y = y.transpose().values
 
-    y = [item for sublist in y for item in sublist]
+    #    y = [item for sublist in y for item in sublist]
 
     computation_output = {
         "output": {
-            "mean_y_local": np.mean(y),
-            "count_local": len(y),
+            "mean_y_local": meanY_vector,
+            "count_local": lenY_vector,
             "beta_vec_size": beta_vec_size,
             "local_stats_dict": local_stats_list,
+            "number_of_regressions": 3,
             "computation_phase": "local_0"
         },
         "cache": {
             "covariates": X.tolist(),
-            "dependents": list(y),
+            "dependents": y.tolist(),
+            "beta_vec_size": beta_vec_size,
+            "number_of_regressions": 3,
             "lambda": lamb
         }
     }
@@ -96,11 +99,25 @@ def local_1(args):
     X = args["cache"]["covariates"]
     y = args["cache"]["dependents"]
     lamb = args["cache"]["lambda"]
+    beta_vec_size = args["cache"]["beta_vec_size"]
+    number_of_regressions = args["cache"]["number_of_regressions"]
+
+    flag = args["input"].get("mask_flag",
+                             np.ones(number_of_regressions, dtype=bool))
+
     biased_X = sm.add_constant(X)
 
     wp = args["input"]["remote_beta"]
 
-    gradient = (1 / len(X)) * np.dot(biased_X.T, np.dot(biased_X, wp) - y)
+    gradient = np.zeros((number_of_regressions, beta_vec_size))
+    #    gradient = np.zeros(number_of_regressions).tolist()
+
+    for i in range(number_of_regressions):
+        y_ = y[i]
+        wp_ = wp[i]
+        if flag[i]:
+            gradient[i, :] = (
+                1 / len(X)) * np.dot(biased_X.T, np.dot(biased_X, wp_) - y_)
 
     computation_phase = {
         "cache": {
@@ -118,10 +135,10 @@ def local_1(args):
 
 
 def local_2(args):
-    input_list = args["cache"]
-    X = input_list["covariates"]
-    y = input_list["dependents"]
-    lamb = input_list["lambda"]
+    cache_list = args["cache"]
+    X = cache_list["covariates"]
+    y = cache_list["dependents"]
+    lamb = cache_list["lambda"]
 
     computation_output = {
         "output": {

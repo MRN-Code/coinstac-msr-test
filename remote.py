@@ -21,6 +21,7 @@ def remote_0(args):
         input_list[site]["local_stats_dict"] for site in input_list
     ]
 
+    number_of_regressions = input_list[first_user_id]["number_of_regressions"]
     # Initial setup
     beta1 = 0.9
     beta2 = 0.999
@@ -29,11 +30,11 @@ def remote_0(args):
     eta = 0.05
     count = 0
 
-    wp = np.zeros(beta_vec_size)
-    mt = np.zeros(beta_vec_size)
-    vt = np.zeros(beta_vec_size)
+    wp = np.zeros((number_of_regressions, beta_vec_size))
+    mt = np.zeros((number_of_regressions, beta_vec_size))
+    vt = np.zeros((number_of_regressions, beta_vec_size))
 
-    iter_flag = 1
+    iter_flag = np.ones(number_of_regressions)
 
     computation_output = {
         "cache": {
@@ -46,11 +47,13 @@ def remote_0(args):
             "wp": wp.tolist(),
             "mt": mt.tolist(),
             "vt": vt.tolist(),
-            "iter_flag": iter_flag,
-            "all_local_stats_dicts": all_local_stats_dicts
+            "iter_flag": iter_flag.tolist(),
+            "all_local_stats_dicts": all_local_stats_dicts,
+            "number_of_regressions": number_of_regressions
         },
         "output": {
             "remote_beta": wp.tolist(),
+            "iter_flag": iter_flag.tolist(),
             "computation_phase": "remote_0"
         }
     }
@@ -70,6 +73,7 @@ def remote_1(args):
     mt = args["cache"]["mt"]
     vt = args["cache"]["vt"]
     iter_flag = args["cache"]["iter_flag"]
+    number_of_regressions = args["cache"]["number_of_regressions"]
 
     count = count + 1
 
@@ -105,10 +109,13 @@ def remote_1(args):
 
         wc = wp - eta * m / (np.sqrt(v) + eps)
 
-        if np.linalg.norm(wc - wp) <= tol:
-            iter_flag = 0
+        mask_flag = np.linalg.norm(wc - wp, axis=1) <= tol
 
-        wp = wc
+        if sum(mask_flag) == number_of_regressions:
+            iter_flag == 0
+
+        wp = np.array(wp)
+        wp[mask_flag] = wc[mask_flag]
 
         computation_output = {
             "cache": {
@@ -126,6 +133,7 @@ def remote_1(args):
             },
             "output": {
                 "remote_beta": wc.tolist(),
+                "mask_flag": mask_flag.astype(int).tolist(),
                 "computation_phase": "remote_1a"
             }
         }
