@@ -25,16 +25,16 @@ def local_0(args):
     lamb = input_list["lambda"]
 
     (X, y, y_labels) = fsl_parser(args)
+
     beta_vec_size = X.shape[1] + 1
 
     # considering only one regression given the challenges in
     # multi-shot regression with multiple regressions
-    #    y = pd.DataFrame(y.loc[:, y.columns[0]])
-    #    y_labels = [y_labels[0]]
+    y = pd.DataFrame(y.loc[:, y.columns[0]])
+    y_labels = [y_labels[0]]
 
     biased_X = sm.add_constant(X)
     biased_X = biased_X.values
-
     beta_vector, meanY_vector, lenY_vector = [], [], []
 
     local_params = []
@@ -43,6 +43,7 @@ def local_0(args):
     local_tvalues = []
     local_rsquared = []
 
+    raise Exception(y, y.shape)
     for column in y.columns:
         curr_y = list(y[column])
         beta = reg.one_shot_regression(biased_X, curr_y, lamb)
@@ -80,14 +81,14 @@ def local_0(args):
             "count_local": lenY_vector,
             "beta_vec_size": beta_vec_size,
             "local_stats_dict": local_stats_list,
-            "number_of_regressions": 3,
+            "number_of_regressions": len(y_labels),
             "computation_phase": "local_0"
         },
         "cache": {
             "covariates": X.tolist(),
             "dependents": y.tolist(),
             "beta_vec_size": beta_vec_size,
-            "number_of_regressions": 3,
+            "number_of_regressions": len(y_labels),
             "lambda": lamb
         }
     }
@@ -102,22 +103,22 @@ def local_1(args):
     beta_vec_size = args["cache"]["beta_vec_size"]
     number_of_regressions = args["cache"]["number_of_regressions"]
 
-    flag = args["input"].get("mask_flag",
-                             np.ones(number_of_regressions, dtype=bool))
+    mask_flag = args["input"].get("mask_flag",
+                                  np.zeros(number_of_regressions, dtype=bool))
 
     biased_X = sm.add_constant(X)
 
-    wp = args["input"]["remote_beta"]
+    w = args["input"]["remote_beta"]
 
     gradient = np.zeros((number_of_regressions, beta_vec_size))
     #    gradient = np.zeros(number_of_regressions).tolist()
 
     for i in range(number_of_regressions):
         y_ = y[i]
-        wp_ = wp[i]
-        if flag[i]:
+        w_ = w[i]
+        if not mask_flag[i]:
             gradient[i, :] = (
-                1 / len(X)) * np.dot(biased_X.T, np.dot(biased_X, wp_) - y_)
+                1 / len(X)) * np.dot(biased_X.T, np.dot(biased_X, w_) - y_)
 
     computation_phase = {
         "cache": {

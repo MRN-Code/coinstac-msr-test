@@ -26,15 +26,16 @@ def remote_0(args):
     beta1 = 0.9
     beta2 = 0.999
     eps = 1e-8
-    tol = 0.01
-    eta = 0.05
+    tol = 0.1
+    eta = 10000  # 0.05
     count = 0
 
-    wp = np.zeros((number_of_regressions, beta_vec_size))
-    mt = np.zeros((number_of_regressions, beta_vec_size))
-    vt = np.zeros((number_of_regressions, beta_vec_size))
+    wp = np.zeros((number_of_regressions, beta_vec_size), dtype=float)
+    wc = np.zeros((number_of_regressions, beta_vec_size), dtype=float)
+    mt = np.zeros((number_of_regressions, beta_vec_size), dtype=float)
+    vt = np.zeros((number_of_regressions, beta_vec_size), dtype=float)
 
-    iter_flag = np.ones(number_of_regressions)
+    iter_flag = 1
 
     computation_output = {
         "cache": {
@@ -45,15 +46,16 @@ def remote_0(args):
             "eta": eta,
             "count": count,
             "wp": wp.tolist(),
+            "wc": wc.tolist(),
             "mt": mt.tolist(),
             "vt": vt.tolist(),
-            "iter_flag": iter_flag.tolist(),
+            "iter_flag": iter_flag,
             "all_local_stats_dicts": all_local_stats_dicts,
             "number_of_regressions": number_of_regressions
         },
         "output": {
             "remote_beta": wp.tolist(),
-            "iter_flag": iter_flag.tolist(),
+            "iter_flag": iter_flag,
             "computation_phase": "remote_0"
         }
     }
@@ -69,7 +71,8 @@ def remote_1(args):
     tol = args["cache"]["tol"]
     eta = args["cache"]["eta"]
     count = args["cache"]["count"]
-    wp = args["cache"]["wp"]
+    wp = np.array(args["cache"]["wp"], dtype=float)
+    wc = np.array(args["cache"]["wc"], dtype=float)
     mt = args["cache"]["mt"]
     vt = args["cache"]["vt"]
     iter_flag = args["cache"]["iter_flag"]
@@ -80,10 +83,10 @@ def remote_1(args):
     if not iter_flag:
         computation_output = {
             "cache": {
-                "avg_beta_vector": wp
+                "avg_beta_vector": wp.tolist()
             },
             "output": {
-                "avg_beta_vector": wp,
+                "avg_beta_vector": wp.tolist(),
                 "computation_phase": "remote_1b"
             }
         }
@@ -102,7 +105,7 @@ def remote_1(args):
             ])
 
         mt = beta1 * np.array(mt) + (1 - beta1) * grad_remote
-        vt = beta2 * np.array(vt) + (1 - beta2) * (grad_remote[0]**2)
+        vt = beta2 * np.array(vt) + (1 - beta2) * (grad_remote**2)
 
         m = mt / (1 - beta1**count)
         v = vt / (1 - beta2**count)
@@ -111,11 +114,17 @@ def remote_1(args):
 
         mask_flag = np.linalg.norm(wc - wp, axis=1) <= tol
 
-        if sum(mask_flag) == number_of_regressions:
-            iter_flag == 0
+#        if count == 26:
+#            raise Exception(grad_remote, mt, vt,
+#                            wc.tolist(),
+#                            sum(mask_flag), number_of_regressions, iter_flag)
 
-        wp = np.array(wp)
-        wp[mask_flag] = wc[mask_flag]
+        if sum(mask_flag) == number_of_regressions:
+            iter_flag = 0
+
+        for i in range(mask_flag.shape[0]):
+            if not mask_flag[i]:
+                wp[i] = wc[i]
 
         computation_output = {
             "cache": {
@@ -255,6 +264,7 @@ def remote_3(args):
     ts_global = avg_beta_vector / se_beta_global
     ps_global = reg.t_to_p(ts_global, dof_global)
 
+#    raise Exception(cache_list["avg_beta_vector"], r_squared_global, ts_global, ps_global, cache_list["dof_global"])
     computation_output = {
         "output": {
             "avg_beta_vector": cache_list["avg_beta_vector"],
