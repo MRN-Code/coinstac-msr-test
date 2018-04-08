@@ -35,7 +35,7 @@ def remote_0(args):
     beta2 = 0.999
     eps = 1e-8
     tol = 0.01
-    eta = 0.05
+    eta = 10000  # 0.05
     count = 0
 
     wp = np.zeros(beta_vec_size)
@@ -107,7 +107,7 @@ def remote_1(args):
             ])
 
         mt = beta1 * np.array(mt) + (1 - beta1) * grad_remote
-        vt = beta2 * np.array(vt) + (1 - beta2) * (grad_remote[0]**2)
+        vt = beta2 * np.array(vt) + (1 - beta2) * (grad_remote**2)
 
         m = mt / (1 - beta1**count)
         v = vt / (1 - beta2**count)
