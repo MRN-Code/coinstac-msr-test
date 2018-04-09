@@ -22,22 +22,20 @@ def local_0(args):
     local statistics to the remote site"""
 
     input_list = args["input"]
-    lamb = input_list["lambda"]
-
     (X, y, y_labels) = fsl_parser(args)
+
     X = pd.DataFrame([1, 2, 3, 4, 5], columns=['3rd-Ventricle'])
     y = pd.DataFrame([1, 2, 3, 4, 5], columns=[0])
-
-    beta_vec_size = X.shape[1] + 1
-
-    # considering only one regression given the challenges in
-    # multi-shot regression with multiple regressions
     y = pd.DataFrame(y.loc[:, y.columns[0]])
     y_labels = [y_labels[0]]
 
+    beta_vec_size = X.shape[1] + 1
+
+    lamb = input_list["lambda"]
     biased_X = sm.add_constant(X)
     biased_X = biased_X.values
-    beta_vector, meanY_vector, lenY_vector = [], [], []
+
+    meanY_vector, lenY_vector = [], []
 
     local_params = []
     local_sse = []
@@ -47,8 +45,6 @@ def local_0(args):
 
     for column in y.columns:
         curr_y = list(y[column])
-        beta = reg.one_shot_regression(biased_X, curr_y, lamb)
-        beta_vector.append(beta.tolist())
         meanY_vector.append(np.mean(curr_y))
         lenY_vector.append(len(y))
 
@@ -71,7 +67,6 @@ def local_0(args):
         local_stats_dict = {key: value for key, value in zip(keys, values)}
         local_stats_list.append(local_stats_dict)
 
-    X = X.values
     y = y.transpose().values
 
     computation_output = {
@@ -85,11 +80,13 @@ def local_0(args):
             "computation_phase": "local_0"
         },
         "cache": {
-            "covariates": X.tolist(),
-            "dependents": y.tolist(),
             "beta_vec_size": beta_vec_size,
             "number_of_regressions": len(y_labels),
-            "lambda": lamb
+            "covariates": X.values.tolist(),
+            "dependents": y.tolist(),
+            "lambda": lamb,
+            "mean_y_local": meanY_vector,
+            "count_local": lenY_vector
         }
     }
     return json.dumps(computation_output)
@@ -100,6 +97,7 @@ def local_1(args):
     X = args["cache"]["covariates"]
     y = args["cache"]["dependents"]
     lamb = args["cache"]["lambda"]
+
     beta_vec_size = args["cache"]["beta_vec_size"]
     number_of_regressions = args["cache"]["number_of_regressions"]
 
@@ -124,7 +122,9 @@ def local_1(args):
         "cache": {
             "covariates": X,
             "dependents": y,
-            "lambda": lamb
+            "lambda": lamb,
+            "mean_y_local": args["cache"]["mean_y_local"],
+            "count_local": args["cache"]["count_local"]
         },
         "output": {
             "local_grad": gradient.tolist(),
@@ -143,8 +143,8 @@ def local_2(args):
 
     computation_output = {
         "output": {
-            "mean_y_local": np.mean(y),
-            "count_local": len(y),
+            "mean_y_local": args["cache"]["mean_y_local"],
+            "count_local": args["cache"]["count_local"],
             "computation_phase": 'local_2'
         },
         "cache": {
@@ -196,16 +196,16 @@ def local_3(args):
     biased_X = sm.add_constant(X)
 
     avg_beta_vector = input_list["avg_beta_vector"]
-    mean_y_global = cache_list["mean_y_global"]
+    mean_y_global = input_list["mean_y_global"]
 
-    y = pd.DataFrame(y)
+    y = pd.DataFrame(np.array(y).transpose())
     SSE_local, SST_local = [], []
     for index, column in enumerate(y.columns):
         curr_y = y[column].values
         SSE_local.append(
             reg.sum_squared_error(biased_X, curr_y, avg_beta_vector))
         SST_local.append(
-            np.sum(np.square(np.subtract(curr_y, mean_y_global[index]))))
+            np.sum(np.square(np.subtract(curr_y, mean_y_global[index])), dtype=float))
 
     varX_matrix_local = np.dot(biased_X.T, biased_X)
 

@@ -16,12 +16,11 @@ def remote_0(args):
     input_list = args["input"]
     first_user_id = list(input_list.keys())[0]
     beta_vec_size = input_list[first_user_id]["beta_vec_size"]
-    input_list = args["input"]
+    number_of_regressions = input_list[first_user_id]["number_of_regressions"]
+
     all_local_stats_dicts = [
         input_list[site]["local_stats_dict"] for site in input_list
     ]
-
-    number_of_regressions = input_list[first_user_id]["number_of_regressions"]
 
     # Initial setup
     beta1 = 0.9
@@ -116,11 +115,6 @@ def remote_1(args):
         wc = wp - eta * m / (np.sqrt(v) + eps)
 
         mask_flag = np.linalg.norm(wc - wp, axis=1) <= tol
-
-#        if count == 26:
-#            raise Exception(grad_remote, mt, vt,
-#                            wc.tolist(),
-#                            sum(mask_flag), number_of_regressions, iter_flag)
 
         if sum(mask_flag) == number_of_regressions:
             iter_flag = 0
@@ -321,7 +315,6 @@ def remote_3(args):
     }
 
     return json.dumps(computation_output)
-
 
 
 if __name__ == '__main__':
