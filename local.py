@@ -27,7 +27,7 @@ def local_0(args):
 
     lamb = input_list["lambda"]
 
-    y = y.transpose().values
+#    y = y.transpose().values
 
     computation_output = {
         "output": {
@@ -39,7 +39,7 @@ def local_0(args):
             "beta_vec_size": beta_vec_size,
             "number_of_regressions": len(y_labels),
             "covariates": X.values.tolist(),
-            "dependents": y.tolist(),
+            "dependents": y.values.tolist(),
             "lambda": lamb,
             "y_labels": y_labels
         }
@@ -60,6 +60,7 @@ def local_1(args):
                                   np.zeros(number_of_regressions, dtype=bool))
 
     biased_X = sm.add_constant(X)
+    y = pd.DataFrame(y)
 
     w = args["input"]["remote_beta"]
 
@@ -75,7 +76,7 @@ def local_1(args):
     computation_phase = {
         "cache": {
             "covariates": X,
-            "dependents": y,
+            "dependents": y.values.tolist(),
             "lambda": lamb,
             "y_labels": args["cache"]["y_labels"]
         },
@@ -105,7 +106,7 @@ def local_2(args):
     local_tvalues = []
     local_rsquared = []
 
-    y = pd.DataFrame(np.array(y).transpose())
+    y = pd.DataFrame(y)
     for column in y.columns:
         curr_y = list(y[column])
         meanY_vector.append(np.mean(curr_y))
