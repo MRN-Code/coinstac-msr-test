@@ -24,10 +24,8 @@ def local_0(args):
     input_list = args["input"]
     (X, y, y_labels) = fsl_parser(args)
 
-    X = pd.DataFrame([1, 2, 3, 4, 5], columns=['3rd-Ventricle'])
-    y = pd.DataFrame([1, 2, 3, 4, 5], columns=[0])
-    y = pd.DataFrame(y.loc[:, y.columns[0]])
-    y_labels = [y_labels[0]]
+    X = pd.DataFrame([1, 2, 3, 4, 5])
+    y = pd.DataFrame([[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5]])
 
     beta_vec_size = X.shape[1] + 1
 
@@ -205,7 +203,9 @@ def local_3(args):
         SSE_local.append(
             reg.sum_squared_error(biased_X, curr_y, avg_beta_vector))
         SST_local.append(
-            np.sum(np.square(np.subtract(curr_y, mean_y_global[index])), dtype=float))
+            np.sum(
+                np.square(np.subtract(curr_y, mean_y_global[index])),
+                dtype=float))
 
     varX_matrix_local = np.dot(biased_X.T, biased_X)
 
