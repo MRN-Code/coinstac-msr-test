@@ -26,8 +26,8 @@ def remote_0(args):
     beta1 = 0.9
     beta2 = 0.999
     eps = 1e-8
-    tol = 0.01
-    eta = 0.05  # 0.05
+    tol = 100 # 0.01
+    eta = 1000  # 0.05
     count = 0
 
     wp = np.zeros((number_of_regressions, beta_vec_size), dtype=float)
@@ -84,11 +84,11 @@ def remote_1(args):
     if not iter_flag:
         computation_output = {
             "cache": {
-                "avg_beta_vector": wp.tolist(),
+                "avg_beta_vector": wc.tolist(),
                 "y_labels": args["cache"]["y_labels"]
             },
             "output": {
-                "avg_beta_vector": wp.tolist(),
+                "avg_beta_vector": wc.tolist(),
                 "computation_phase": "remote_1b"
             }
         }
@@ -132,6 +132,7 @@ def remote_1(args):
                 "eta": eta,
                 "count": count,
                 "wp": wp.tolist(),
+                "wc": wc.tolist(),
                 "mt": mt.tolist(),
                 "vt": vt.tolist(),
                 "iter_flag": iter_flag,

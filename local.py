@@ -24,8 +24,8 @@ def local_0(args):
     input_list = args["input"]
     (X, y, y_labels) = fsl_parser(args)
 
-    X = pd.DataFrame([1, 2, 3, 4, 5])
-    y = pd.DataFrame([[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5]])
+#    X = pd.DataFrame([1, 2, 3, 4, 5])
+#    y = pd.DataFrame([[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5]])
 
     beta_vec_size = X.shape[1] + 1
 
