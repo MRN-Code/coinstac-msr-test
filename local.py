@@ -20,18 +20,82 @@ with warnings.catch_warnings():
 def local_0(args):
     """Read data from the local sites, perform local regressions and send
     local statistics to the remote site"""
-
     input_list = args["input"]
     (X, y, y_labels) = fsl_parser(args)
-
-#    X = pd.DataFrame([1, 2, 3, 4, 5])
-#    y = pd.DataFrame([[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5]])
 
     beta_vec_size = X.shape[1] + 1
 
     lamb = input_list["lambda"]
+
+    y = y.transpose().values
+
+    computation_output = {
+        "output": {
+            "beta_vec_size": beta_vec_size,
+            "number_of_regressions": len(y_labels),
+            "computation_phase": "local_0"
+        },
+        "cache": {
+            "beta_vec_size": beta_vec_size,
+            "number_of_regressions": len(y_labels),
+            "covariates": X.values.tolist(),
+            "dependents": y.tolist(),
+            "lambda": lamb,
+            "y_labels": y_labels
+        }
+    }
+    return json.dumps(computation_output)
+
+
+def local_1(args):
+
+    X = args["cache"]["covariates"]
+    y = args["cache"]["dependents"]
+    lamb = args["cache"]["lambda"]
+
+    beta_vec_size = args["cache"]["beta_vec_size"]
+    number_of_regressions = args["cache"]["number_of_regressions"]
+
+    mask_flag = args["input"].get("mask_flag",
+                                  np.zeros(number_of_regressions, dtype=bool))
+
     biased_X = sm.add_constant(X)
-    biased_X = biased_X.values
+
+    w = args["input"]["remote_beta"]
+
+    gradient = np.zeros((number_of_regressions, beta_vec_size))
+
+    for i in range(number_of_regressions):
+        y_ = y[i]
+        w_ = w[i]
+        if not mask_flag[i]:
+            gradient[i, :] = (
+                1 / len(X)) * np.dot(biased_X.T, np.dot(biased_X, w_) - y_)
+
+    computation_phase = {
+        "cache": {
+            "covariates": X,
+            "dependents": y,
+            "lambda": lamb,
+            "y_labels": args["cache"]["y_labels"]
+        },
+        "output": {
+            "local_grad": gradient.tolist(),
+            "computation_phase": "local_1"
+        }
+    }
+
+    return json.dumps(computation_phase)
+
+
+def local_2(args):
+    cache_list = args["cache"]
+    X = cache_list["covariates"]
+    y = cache_list["dependents"]
+    y_labels = cache_list["y_labels"]
+    lamb = cache_list["lambda"]
+
+    biased_X = sm.add_constant(X)
 
     meanY_vector, lenY_vector = [], []
 
@@ -41,6 +105,7 @@ def local_0(args):
     local_tvalues = []
     local_rsquared = []
 
+    y = pd.DataFrame(np.array(y).transpose())
     for column in y.columns:
         curr_y = list(y[column])
         meanY_vector.append(np.mean(curr_y))
@@ -65,89 +130,18 @@ def local_0(args):
         local_stats_dict = {key: value for key, value in zip(keys, values)}
         local_stats_list.append(local_stats_dict)
 
-    y = y.transpose().values
-
+    y = y.values
     computation_output = {
         "output": {
-            "beta_vec_size": beta_vec_size,
-            "number_of_regressions": len(y_labels),
             "mean_y_local": meanY_vector,
             "count_local": lenY_vector,
-            "local_stats_dict": local_stats_list,
+            "local_stats_list": local_stats_list,
             "y_labels": y_labels,
-            "computation_phase": "local_0"
-        },
-        "cache": {
-            "beta_vec_size": beta_vec_size,
-            "number_of_regressions": len(y_labels),
-            "covariates": X.values.tolist(),
-            "dependents": y.tolist(),
-            "lambda": lamb,
-            "mean_y_local": meanY_vector,
-            "count_local": lenY_vector
-        }
-    }
-    return json.dumps(computation_output)
-
-
-def local_1(args):
-
-    X = args["cache"]["covariates"]
-    y = args["cache"]["dependents"]
-    lamb = args["cache"]["lambda"]
-
-    beta_vec_size = args["cache"]["beta_vec_size"]
-    number_of_regressions = args["cache"]["number_of_regressions"]
-
-    mask_flag = args["input"].get("mask_flag",
-                                  np.zeros(number_of_regressions, dtype=bool))
-
-    biased_X = sm.add_constant(X)
-
-    w = args["input"]["remote_beta"]
-
-    gradient = np.zeros((number_of_regressions, beta_vec_size))
-    #    gradient = np.zeros(number_of_regressions).tolist()
-
-    for i in range(number_of_regressions):
-        y_ = y[i]
-        w_ = w[i]
-        if not mask_flag[i]:
-            gradient[i, :] = (
-                1 / len(X)) * np.dot(biased_X.T, np.dot(biased_X, w_) - y_)
-
-    computation_phase = {
-        "cache": {
-            "covariates": X,
-            "dependents": y,
-            "lambda": lamb,
-            "mean_y_local": args["cache"]["mean_y_local"],
-            "count_local": args["cache"]["count_local"]
-        },
-        "output": {
-            "local_grad": gradient.tolist(),
-            "computation_phase": "local_1"
-        }
-    }
-
-    return json.dumps(computation_phase)
-
-
-def local_2(args):
-    cache_list = args["cache"]
-    X = cache_list["covariates"]
-    y = cache_list["dependents"]
-    lamb = cache_list["lambda"]
-
-    computation_output = {
-        "output": {
-            "mean_y_local": args["cache"]["mean_y_local"],
-            "count_local": args["cache"]["count_local"],
             "computation_phase": 'local_2'
         },
         "cache": {
             "covariates": X,
-            "dependents": y,
+            "dependents": y.tolist(),
             "lambda": lamb
         }
     }
@@ -196,7 +190,7 @@ def local_3(args):
     avg_beta_vector = input_list["avg_beta_vector"]
     mean_y_global = input_list["mean_y_global"]
 
-    y = pd.DataFrame(np.array(y).transpose())
+    y = pd.DataFrame(y)
     SSE_local, SST_local = [], []
     for index, column in enumerate(y.columns):
         curr_y = y[column].values

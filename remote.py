@@ -18,15 +18,11 @@ def remote_0(args):
     beta_vec_size = input_list[first_user_id]["beta_vec_size"]
     number_of_regressions = input_list[first_user_id]["number_of_regressions"]
 
-    all_local_stats_dicts = [
-        input_list[site]["local_stats_dict"] for site in input_list
-    ]
-
     # Initial setup
     beta1 = 0.9
     beta2 = 0.999
     eps = 1e-8
-    tol = 100 # 0.01
+    tol = 100  # 0.01
     eta = 1000  # 0.05
     count = 0
 
@@ -50,9 +46,7 @@ def remote_0(args):
             "mt": mt.tolist(),
             "vt": vt.tolist(),
             "iter_flag": iter_flag,
-            "all_local_stats_dicts": all_local_stats_dicts,
             "number_of_regressions": number_of_regressions,
-            "y_labels": input_list[first_user_id]["y_labels"]
         },
         "output": {
             "remote_beta": wp.tolist(),
@@ -84,8 +78,7 @@ def remote_1(args):
     if not iter_flag:
         computation_output = {
             "cache": {
-                "avg_beta_vector": wc.tolist(),
-                "y_labels": args["cache"]["y_labels"]
+                "avg_beta_vector": wc.tolist()
             },
             "output": {
                 "avg_beta_vector": wc.tolist(),
@@ -135,9 +128,7 @@ def remote_1(args):
                 "wc": wc.tolist(),
                 "mt": mt.tolist(),
                 "vt": vt.tolist(),
-                "iter_flag": iter_flag,
-                "local_stats_dict": args["cache"]["all_local_stats_dicts"],
-                "y_labels": args["cache"]["y_labels"]
+                "iter_flag": iter_flag
             },
             "output": {
                 "remote_beta": wc.tolist(),
@@ -180,6 +171,10 @@ def remote_2(args):
 
     avg_beta_vector = np.array(args["cache"]["avg_beta_vector"])
 
+    all_local_stats_dicts = [
+        input_list[site]["local_stats_list"] for site in input_list
+    ]
+
     mean_y_local = [input_list[site]["mean_y_local"] for site in input_list]
     count_y_local = [
         np.array(input_list[site]["count_local"]) for site in input_list
@@ -199,8 +194,8 @@ def remote_2(args):
             "avg_beta_vector": avg_beta_vector.tolist(),
             "mean_y_global": mean_y_global.tolist(),
             "dof_global": dof_global.tolist(),
-            "all_local_stats_dicts": args["cache"]["all_local_stats_dicts"],
-            "y_labels": args["cache"]["y_labels"]
+            "all_local_stats_dicts": all_local_stats_dicts,
+            "y_labels": args["input"]["local0"]["y_labels"]
         },
     }
 
@@ -249,7 +244,7 @@ def remote_3(args):
     """
     input_list = args["input"]
     y_labels = args["cache"]["y_labels"]
-    all_local_stats_dicts = args["cache"]["local_stats_dict"]
+    all_local_stats_dicts = args["cache"]["all_local_stats_dicts"]
 
     cache_list = args["cache"]
     avg_beta_vector = cache_list["avg_beta_vector"]
